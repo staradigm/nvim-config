@@ -1,0 +1,4 @@
+# Local Neovim state (never commit)
+.lazy/
+.nvim/
+*.log
