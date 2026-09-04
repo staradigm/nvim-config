@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: nightly
+
+      - name: Install plugins (Lazy sync)
+        run: nvim --headless "+Lazy! sync" +qa
+
+      - name: Verify config loads
+        run: nvim --headless -u init.lua -l lua/verify.lua
+
+      - name: Lua syntax check
+        run: |
+          for f in init.lua lua/*.lua lua/plugins/*.lua; do
+            luajit -bl "$f" > /dev/null 2>&1 && echo "OK  $f" || echo "ERR $f"
+          done
