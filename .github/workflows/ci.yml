@@ -17,14 +17,18 @@ jobs:
           neovim: true
           version: nightly
 
+      # Treat the checkout as a real ~/.config/nvim so runtimepath is correct.
+      - name: Link config into XDG_CONFIG_HOME
+        run: |
+          mkdir -p "$HOME/.config"
+          ln -sfn "$GITHUB_WORKSPACE" "$HOME/.config/nvim"
+          nvim --version | head -1
+
       - name: Install plugins (Lazy sync)
         run: nvim --headless "+Lazy! sync" +qa
 
       - name: Verify config loads
-        run: nvim --headless -u init.lua -l lua/verify.lua
+        run: nvim --headless "+luafile lua/verify.lua" +qa
 
-      - name: Lua syntax check
-        run: |
-          for f in init.lua lua/*.lua lua/plugins/*.lua; do
-            luajit -bl "$f" > /dev/null 2>&1 && echo "OK  $f" || echo "ERR $f"
-          done
+      - name: Verify startup is clean
+        run: nvim --headless +qa 2>&1 | grep -iE "error|exception" || echo "clean startup"
